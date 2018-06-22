@@ -1,15 +1,9 @@
 #include <mpi.h>
 #include <stdio.h>
 
-/**
- * Send message to next process, starting from 0 and ending in size-1
- * executing in a ordered maner
- */
 int main(int argc, char *argv[]) {
   int rank, root_process, ierr, size;
   MPI_Status status;
-
-  int max_value = 16;
 
   ierr = MPI_Init(&argc, &argv);
 
@@ -19,21 +13,27 @@ int main(int argc, char *argv[]) {
   ierr = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   ierr = MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  int data = 0;
+  int data = 295;
 
   /**
-   * process 0 increments counter and sends a message to process 1
-   * process 1 receives message and prints data value
-   * this is done max_value times
+   * process 0 is the first to send to next process and waits for a message
+   * every other process also waits
+   * following processes send to next, last process sends to process 0 who's
+   * waiting for a message from last process
    */
-  while (data < max_value) {
-    if (rank == 0) {
-      data++;
-      MPI_Send(&data, 1, MPI_INT, 1, 0, MPI_COMM_WORLD);
-    } else {
-      MPI_Recv(&data, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-      printf("process %d: data is: %d\n", rank, data);
-    }
+  if (rank == 0) {
+    MPI_Send(&data, 1, MPI_INT, 1, 0, MPI_COMM_WORLD);
+    printf("process %d sent data %d to process %d\n", rank, data,
+           (rank + 1) % size);
+    MPI_Recv(&data, 1, MPI_INT, size - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    printf("process %d: data is: %d\n", rank, data);
+  } else {
+    MPI_Recv(&data, 1, MPI_INT, rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    printf("process %d received data %d from process %d\n", rank, data,
+           rank - 1);
+    MPI_Send(&data, 1, MPI_INT, (rank + 1) % size, 0, MPI_COMM_WORLD);
+    printf("process %d sent data %d to process %d\n", rank, data,
+           (rank + 1) % size);
   }
 
   ierr = MPI_Finalize();

@@ -20,16 +20,17 @@ make
 make run
 ```
 
-### Comunicacion punto a punto 1
+### Comunicacion punto a punto
 ```bash
 git checkout tags/lab-puntoapunto1
 make
 make run
-```
 
-### Comunicacion punto a punto 2
-```bash
 git checkout tags/lab-puntoapunto2
+make
+make run
+
+git checkout tags/lab-puntoapunto3
 make
 make run
 ```

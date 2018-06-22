@@ -25,7 +25,7 @@ $(BUILD_DIR)/%.c.o: %.c
 .PHONY: run
 
 run:
-	mpiexec -n 2 $(BUILD_DIR)/$(TARGET_EXEC)
+	mpiexec -n 8 $(BUILD_DIR)/$(TARGET_EXEC)
 
 .PHONY: format
 
