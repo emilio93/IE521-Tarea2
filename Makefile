@@ -27,7 +27,7 @@ $(BUILD_DIR)/%.c.o: %.c
 run:
 	mpiexec -n 8 $(BUILD_DIR)/$(TARGET_EXEC)
 
-.PHONY: run
+.PHONY: format
 
 format:
 	clang-format -i ./laboratorio/*.c
