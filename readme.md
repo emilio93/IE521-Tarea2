@@ -26,3 +26,10 @@ git checkout tags/lab-puntoapunto1
 make
 make run
 ```
+
+### Comunicacion punto a punto 2
+```bash
+git checkout tags/lab-puntoapunto2
+make
+make run
+```

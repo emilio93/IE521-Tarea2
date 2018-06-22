@@ -9,6 +9,8 @@ int main(int argc, char *argv[]) {
   int rank, root_process, ierr, size;
   MPI_Status status;
 
+  int max_value = 16;
+
   ierr = MPI_Init(&argc, &argv);
 
   /*
@@ -17,18 +19,22 @@ int main(int argc, char *argv[]) {
   ierr = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   ierr = MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  int data;
+  int data = 0;
 
-  // wait for message before sending
-  MPI_Recv(&data, 1, MPI_INT, rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-  if (rank % 2 == 0) {
-    printf("Hello! My ID is an even number. I am %d of %d\n", rank, size);
-  } else {
-    printf("Hello! My ID is an odd number. I am %d of %d\n", rank, size);
+  /**
+   * process 0 increments counter and sends a message to process 1
+   * process 1 receives message and prints data value
+   * this is done max_value times
+   */
+  while (data < max_value) {
+    if (rank == 0) {
+      data++;
+      MPI_Send(&data, 1, MPI_INT, 1, 0, MPI_COMM_WORLD);
+    } else {
+      MPI_Recv(&data, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+      printf("process %d: data is: %d\n", rank, data);
+    }
   }
-
-  // Send to next, last will send to first so everyone has something to listen
-  MPI_Send(&data, 1, MPI_INT, (rank + 1) % size, 0, MPI_COMM_WORLD);
 
   ierr = MPI_Finalize();
   return 0;
