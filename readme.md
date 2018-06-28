@@ -1,7 +1,7 @@
 # Tarea 2
 
-
 ## Laboratorio
+
 Se presentan los siguientes ejercicios:
 
 ### Hola Mundo
@@ -21,6 +21,7 @@ make run
 ```
 
 ### Comunicacion punto a punto
+
 ```bash
 git checkout tags/lab-puntoapunto1
 make
@@ -36,6 +37,7 @@ make run
 ```
 
 ### Comunicacion colectiva
+
 ```bash
 git checkout tags/lab-comunicacioncolectiva1
 make
