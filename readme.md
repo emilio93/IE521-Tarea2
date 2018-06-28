@@ -47,3 +47,11 @@ git checkout tags/lab-comunicacioncolectiva2
 make
 make run
 ```
+
+### Producto vector matriz
+
+```bash
+git checkout tags/lab-productovectormatriz
+make
+make run
+```

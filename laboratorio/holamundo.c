@@ -4,36 +4,80 @@
 #include <time.h>
 
 /**
- * @brief Obtains part of average of a chunk of an array
+ * @brief transpose an nxm matrix into a mxn matrix
  *
- * The sum of all the part of averages obtains the average of an array.
- *
- * @param chunk part of the array
- * @param chunk_size size of the chunk
- * @param data_size size of the full array
- * @param initial first element used for averaging, normally 0.
- * @return float part of the average corresponding to the chunk
+ * @param input matrix start
+ * @param output output matrix
+ * @param n matrix column count
+ * @param m matrix row count
  */
-float average(int chunk[], int chunk_size, int data_size, int initial) {
-
-  // initialize result var
-  float result = 0;
-
-  // obtain average based on full list size
-  // s: full list
-  // n: qty of items in full list
-  // <s>: full list average
-  //
-  // <s> = (s[0] + s[1] + s[2] + ... + s[n-1])/n
-  //     = s[0]/n + s[1]/n + s[2]/n + ... + s[n-1]/n
-  //     = (s[0] + s[1])/n + (s[2] + s[4])/n + ... + (s[n-2] + s[n-1])/n
-  //     = ...
-  //
-  for (int i = initial; i < (initial + chunk_size); i++) {
-    result = result + (float)chunk[i] / (float)data_size;
+void transpose(const int *input, int *output, const int n, const int m) {
+  for (size_t i = 0; i < n * m; i++) {
+    output[i] = input[m * (i % n) + i / n];
   }
+}
 
+/**
+ * @brief obtains dot product of vectors, a must be a vector
+ * b may be an array of width m, and j-th row is used for
+ * the operation.
+ *
+ * @param a vector data
+ * @param b transposed matrix data
+ * @param n width of b matrix
+ * @param m length of vector, height of b matrix
+ * @param j row where vector is located at within a matrix
+ * @return int dot product result
+ */
+int vector_product_transposed_vector(const int *a, const int *b, int n, int m,
+                                     int j) {
+  int result = 0;
+  for (size_t i = 0; i < n; i++) {
+    result = result + a[i] * b[m * j + i];
+  }
   return result;
+}
+
+/**
+ * @breif Given a m sized vector and a nxp matrix, the product vector*matrix is
+ * obtained
+ *
+ * @param vector vector to multiply
+ * @param matrix matrix to multiply
+ * @param result result of product vextor x matrix
+ * @param n width of matrix
+ * @param m height of matrix, is equal to vector length
+ */
+void vector_product_matrix(const int *vector, const int *matrix, int *result,
+                           int n, int m) {
+  // result[j] = vector[j]*matrix[0,j] + vector[j]*matrix[1,j] + ...
+
+  // transposing matrix takes advantge of spatial locality
+  // in matrix for multiplication
+  // further optimization could take advantage of
+  int *transposed = malloc(sizeof(int) * n * m);
+  transpose(matrix, transposed, n, m);
+  for (size_t j = 0; j < n; j++) {
+    result[j] = vector_product_transposed_vector(vector, transposed, n, m, j);
+  }
+  free(transposed);
+}
+
+/**
+ * @brief prints a nxm matrix
+ *
+ * @param matrix the matrix to print
+ * @param n width of matrix
+ * @param m height of matrix
+ */
+void print_matrix(int *matrix, int n, int m) {
+  for (size_t i = 0; i < m; i++) { // rows
+    printf(i == 0 ? "(" : " ");
+    for (size_t j = 0; j < n; j++) { // columns
+      printf(j != n - 1 ? "%d, " : "%d", matrix[m * i + j]);
+    }
+    printf(i == m - 1 ? ")\n" : "\n");
+  }
 }
 
 int main(int argc, char *argv[]) {
@@ -48,37 +92,64 @@ int main(int argc, char *argv[]) {
   ierr = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   ierr = MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  // Generated rand nums in google spreadsheets
-  // average is 514.500
-  int data[] = {355, 70,  34,  305, 571, 542, 133, 704, 648, 649, 775, 759,
-                383, 638, 724, 543, 702, 389, 657, 675, 369, 92,  738, 893};
-  int data_size = sizeof(data) / sizeof(data[0]);
+  // create vector
+  int vector_size = 8;
+  int vector[] = {1, 1, 1, 1, 1, 1, 1, 1};
 
-  // get average for each chunk based on rank
-  int element_count = data_size / size;
-  float chunk_average =
-      average(data, element_count, data_size, rank * element_count);
+  // create matrix
+  int matrix_column_count = 8;
+  int matrix_row_count = 8;
+  int matrix_size = matrix_column_count * matrix_row_count;
+  // clang-format off
+  int matrix[] = {
+    1,0,0,0,0,0,0,0,
+    1,0,0,0,0,0,0,1,
+    1,0,0,0,0,0,1,1,
+    1,0,0,0,0,1,1,1,
+    1,0,0,0,1,1,1,1,
+    1,0,0,1,1,1,1,1,
+    1,0,1,1,1,1,1,1,
+    1,1,1,1,1,1,1,1
+  };
+  // clang-format on
 
-  // Reduce all of the local sums into the global sum
-  float reduced_sum;
-  MPI_Reduce(&chunk_average, &reduced_sum, 1, MPI_FLOAT, MPI_SUM, 0,
-             MPI_COMM_WORLD);
+  // transpose matrix
+  int *transposed =
+      malloc(sizeof(int) * matrix_row_count * matrix_column_count);
+  transpose(matrix, transposed, matrix_row_count, matrix_column_count);
 
-  // process the results in root process
   if (rank == 0) {
-    // complete the result with last chunk(if exists), which is smaller than
-    // other chunks, specifially data_size % size, note this chunk size will
-    // be 0 if the number of elements in the full list is divisible by the
-    // qty of processes available
-    int remaining_elements = data_size % size;
-    float result = reduced_sum;
-    if (remaining_elements != 0) {
-      int first_element = data_size - remaining_elements;
-      result =
-          result + average(data, remaining_elements, data_size, first_element);
+    printf("Vector is:\n");
+    print_matrix(vector, vector_size, 1);
+    printf("Matrix is:\n");
+    print_matrix(matrix, matrix_row_count, matrix_column_count);
+  }
+
+  // process in each rank to obtain a single result item.
+  int result = vector_product_transposed_vector(
+      vector, transposed, matrix_row_count, matrix_column_count, rank);
+
+  // each rank but 0 sends result to 0
+  if (rank != 0) {
+    MPI_Send(&result, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
+  }
+
+  // obtain
+  if (rank == 0) {
+    int *data = malloc(sizeof(int) * vector_size);
+
+    // obtained result by rank 0 is easily available
+    data[0] = result;
+
+    // obtain results from other ranks
+    for (size_t i = 1; i < size; i++) {
+      MPI_Recv(&data[i], 1, MPI_INT, i, MPI_ANY_TAG, MPI_COMM_WORLD,
+               MPI_STATUS_IGNORE);
     }
-    // print multi process result
-    printf("Multi process average is %f\n", result);
+
+    // print result
+    printf("Result is:\n");
+    print_matrix(data, matrix_row_count, 1);
   }
 
   ierr = MPI_Finalize();
