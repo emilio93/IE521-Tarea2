@@ -42,4 +42,8 @@ make run
 git checkout tags/lab-comunicacioncolectiva1
 make
 make run
+
+git checkout tags/lab-comunicacioncolectiva2
+make
+make run
 ```
