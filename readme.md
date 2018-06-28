@@ -34,3 +34,10 @@ git checkout tags/lab-puntoapunto3
 make
 make run
 ```
+
+### Comunicacion colectiva
+```bash
+git checkout tags/lab-comunicacioncolectiva1
+make
+make run
+```
