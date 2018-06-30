@@ -33,6 +33,13 @@ int main(int argc, char *argv[]) {
   // prime numbers found so far
   int n = 0;
 
+  // open file to write primes
+  FILE *fp = fopen("primos.csv", "w+");
+  if (!fp) {
+    printf("file not created\n");
+    return 0;
+  }
+
   // setup elapsed time vars
   long start, end;
   struct timeval timecheck;
@@ -45,6 +52,7 @@ int main(int argc, char *argv[]) {
   for (int i = 0; n < 500000; i++) {
     if (isPrime(i) > 0) {
       n++;
+      fprintf(fp, "%d, %d\n", n, i);
     }
   }
 
@@ -52,6 +60,9 @@ int main(int argc, char *argv[]) {
   gettimeofday(&timecheck, NULL);
   end = (long)timecheck.tv_sec * 1000 + (long)timecheck.tv_usec / 1000;
   printf("%ld milliseconds elapsed\n", (end - start));
+
+  // close file
+  fclose(fp);
 
   return 0;
 }
