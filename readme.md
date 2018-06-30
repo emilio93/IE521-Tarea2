@@ -48,10 +48,32 @@ make
 make run
 ```
 
-### Producto vector matriz
+### Producto vector 8x1 matriz 8x8
 
 ```bash
 git checkout tags/lab-productovectormatriz
+make
+make run
+```
+
+## Ejercicio 1
+
+### Producto vector matriz secuencial
+
+Se presenta la solución utilizando únicamente 1 de los ranks existentes.
+
+```bash
+git checkout tags/ej1-secuencial
+make
+make run
+```
+
+### Producto vector matriz paralelo
+
+El algoritmo presentado requiere al menos 2 ranks, la tarea se paraleliza en n-1 ranks, n siendo el total de ranks.
+
+```bash
+git checkout tags/ej1-paralelo
 make
 make run
 ```
