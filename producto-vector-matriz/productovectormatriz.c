@@ -1,7 +1,6 @@
 #include <mpi.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
 
 /**
  * @brief transpose an nxm matrix into a mxn matrix
@@ -92,64 +91,44 @@ int main(int argc, char *argv[]) {
   ierr = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   ierr = MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  // create vector
-  int vector_size = 8;
-  int vector[] = {1, 1, 1, 1, 1, 1, 1, 1};
-
-  // create matrix
-  int matrix_column_count = 8;
-  int matrix_row_count = 8;
-  int matrix_size = matrix_column_count * matrix_row_count;
-  // clang-format off
-  int matrix[] = {
-    1,0,0,0,0,0,0,0,
-    1,0,0,0,0,0,0,1,
-    1,0,0,0,0,0,1,1,
-    1,0,0,0,0,1,1,1,
-    1,0,0,0,1,1,1,1,
-    1,0,0,1,1,1,1,1,
-    1,0,1,1,1,1,1,1,
-    1,1,1,1,1,1,1,1
-  };
-  // clang-format on
-
-  // transpose matrix
-  int *transposed =
-      malloc(sizeof(int) * matrix_row_count * matrix_column_count);
-  transpose(matrix, transposed, matrix_row_count, matrix_column_count);
-
   if (rank == 0) {
+
+    // create vector
+    int vector_size = 8;
+    int vector[] = {1, 1, 1, 1, 1, 1, 1, 1};
     printf("Vector is:\n");
     print_matrix(vector, vector_size, 1);
+
+    // create matrix
+    int matrix_column_count = 8;
+    int matrix_row_count = 8;
+    int matrix_size = matrix_column_count * matrix_row_count;
+    // clang-format off
+    int matrix[] = {
+      1,0,0,0,0,0,0,0,
+      1,0,0,0,0,0,0,1,
+      1,0,0,0,0,0,1,1,
+      1,0,0,0,0,1,1,1,
+      1,0,0,0,1,1,1,1,
+      1,0,0,1,1,1,1,1,
+      1,0,1,1,1,1,1,1,
+      1,1,1,1,1,1,1,1
+    };
+    // clang-format on
     printf("Matrix is:\n");
     print_matrix(matrix, matrix_row_count, matrix_column_count);
-  }
 
-  // process in each rank to obtain a single result item.
-  int result = vector_product_transposed_vector(
-      vector, transposed, matrix_row_count, matrix_column_count, rank);
+    // allocate memory for resulting vector
+    int *result = malloc(sizeof(int) * matrix_row_count);
 
-  // each rank but 0 sends result to 0
-  if (rank != 0) {
-    MPI_Send(&result, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
-  }
-
-  // obtain
-  if (rank == 0) {
-    int *data = malloc(sizeof(int) * vector_size);
-
-    // obtained result by rank 0 is easily available
-    data[0] = result;
-
-    // obtain results from other ranks
-    for (size_t i = 1; i < size; i++) {
-      MPI_Recv(&data[i], 1, MPI_INT, i, MPI_ANY_TAG, MPI_COMM_WORLD,
-               MPI_STATUS_IGNORE);
-    }
+    // obtain result
+    vector_product_matrix(vector, matrix, result, matrix_column_count,
+                          matrix_row_count);
 
     // print result
     printf("Result is:\n");
-    print_matrix(data, matrix_row_count, 1);
+    print_matrix(result, matrix_column_count, 1);
+    free(result);
   }
 
   ierr = MPI_Finalize();
