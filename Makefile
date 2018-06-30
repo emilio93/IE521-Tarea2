@@ -3,7 +3,7 @@ TARGET_EXEC ?= a.out
 CC=mpicc
 
 BUILD_DIR ?= ./build
-SRC_DIRS ?= ./laboratorio
+SRC_DIRS ?= ./producto-vector-matriz
 
 SRCS := $(shell find $(SRC_DIRS) -name *.c)
 OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
@@ -30,7 +30,7 @@ run:
 .PHONY: format
 
 format:
-	clang-format -i ./laboratorio/*.c
+	clang-format -i ./$(SRC_DIRS)/*.c
 
 
 .PHONY: clean
