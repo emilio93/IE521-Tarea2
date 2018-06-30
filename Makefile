@@ -3,7 +3,7 @@ TARGET_EXEC ?= a.out
 CC=mpicc
 
 BUILD_DIR ?= ./build
-SRC_DIRS ?= ./producto-vector-matriz
+SRC_DIRS ?= ./primos
 
 SRCS := $(shell find $(SRC_DIRS) -name *.c)
 OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
@@ -25,7 +25,7 @@ $(BUILD_DIR)/%.c.o: %.c
 .PHONY: run
 
 run:
-	mpiexec -n 8 $(BUILD_DIR)/$(TARGET_EXEC)
+	mpiexec -n 1 $(BUILD_DIR)/$(TARGET_EXEC)
 
 .PHONY: format
 
