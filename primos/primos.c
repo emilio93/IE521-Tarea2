@@ -162,6 +162,30 @@ int main(int argc, char *argv[]) {
 
   MPI_Barrier(MPI_COMM_WORLD);
 
+  for (size_t i = 1; i < size; i++) {
+    if (rank == i) {
+
+      // open file to write primes
+      fp = fopen("primos.csv", rank == 1 ? "w+" : "a");
+      if (!fp) {
+        printf("file not created\n");
+        return 0;
+      }
+
+      for (size_t i = 0; i < limit / size * 2; i++) {
+        if (local_primes[i] != 0) {
+          fprintf(fp, "%d\n", local_primes[i]);
+        } else {
+          break;
+        }
+      }
+      free(local_primes);
+      // close file
+      fclose(fp);
+    }
+    MPI_Barrier(MPI_COMM_WORLD);
+  }
+
   if (rank == 0) {
     // get time at end and get elapsed time
     gettimeofday(&timecheck, NULL);
