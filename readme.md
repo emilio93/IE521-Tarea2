@@ -77,3 +77,49 @@ git checkout tags/ej1-paralelo
 make
 make run
 ```
+
+## Ejercicio 3
+
+### 500000 primeros primos secuencial
+
+Se presenta la solución llamando con solo un rank.
+
+Se imprime el tiempo requerido para encontrar los primos.
+
+```bash
+git checkout tags/ej3-secuencial
+make
+make run
+```
+
+#### Para validar los resultados en secuencial con un archivo csv
+
+Se generan en el archivo output.csv las columnas de conteo(a), resultado obtenido(b) y resultado obtenido de internet(c), se puede realizar la operación abs(b-c), luego sumar todos estos resultados, lo cual debería ser 0.
+
+```bash
+git checkout tags/ej3-validar-secuencial
+./compare-primes.sh
+```
+
+### 500000 primeros primos paralelo
+
+El algoritmo presentado requiere al menos 2 ranks, la tarea se paraleliza en n-1 ranks, n siendo el total de ranks.
+
+Se encuentran más de 500000 primos debido al metodo de distribución de los números entre los ranks.
+
+Se imprime el tiempo requerido.
+
+```bash
+git checkout tags/ej3-paralelo
+make
+make run
+```
+
+#### Para validar los resultados  en paralelo con un archivo csv
+
+igual que en el caso secuancial, excepto que no se cuenta con una columna de conteo.
+
+```bash
+git checkout tags/ej3-validar-secuencial
+./compare-primes.sh
+```
