@@ -3,7 +3,7 @@ TARGET_EXEC ?= a.out
 CC=mpicc
 
 BUILD_DIR ?= ./build
-SRC_DIRS ?= ./primos
+SRC_DIRS ?= ./ruta-mas-corta
 
 SRCS := $(shell find $(SRC_DIRS) -name *.c)
 OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
