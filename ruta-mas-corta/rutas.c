@@ -215,50 +215,65 @@ int main(int argc, char *argv[]) {
   };
   // clang-format on
 
+  int *paths = NULL;
+  int *local_paths = NULL;
+  // calculate how many memory is needed
+  int path_count = count_paths(cities, cities_size);
+
+  // allocate such memory
+  paths = malloc(sizeof(int) * path_count * (cities_size + 1));
+
+  // obtain all possible routes
+  get_paths(cities, cities_size, paths);
+
+  local_paths = malloc(sizeof(int) * path_count / size);
+
+  // start with very high lowest route
+  int lowest = 100000000;
+  // set index to 0, which will be the first to override previous result
+  int lowest_idx = 0;
+
+  // Scatter the random numbers to all processes
+  MPI_Scatter(paths, path_count / size, MPI_INT, local_paths, path_count / size,
+              MPI_INT, 0, MPI_COMM_WORLD);
+
+  // obtain distances for each route and determine shortest distance
+  for (int i = 0; i < path_count; i++) {
+    int path_distance = path_length(paths, cities, cities_size, distances, i);
+    if (path_distance < lowest) {
+      lowest = path_distance;
+      lowest_idx = i;
+    }
+  }
+
+  // obtain all distances which match shortest and print
+  for (int i = path_count / size * rank; i < path_count / size * (rank + 1);
+       i++) {
+    int path_distance = path_length(paths, cities, cities_size, distances, i);
+    if (path_distance == lowest) {
+      printf("\nShortest path found %d km at index %d rank is %d\n", lowest, i,
+             rank);
+      printf("%d, %d, %d, %d, %d, %d, %d, %d, %d\n", paths[i * 9],
+             paths[i * 9 + 1], paths[i * 9 + 2], paths[i * 9 + 3],
+             paths[i * 9 + 4], paths[i * 9 + 5], paths[i * 9 + 6],
+             paths[i * 9 + 7], paths[i * 9 + 8]);
+      for (size_t j = 0; j < 8; j++) {
+        printf("Distance from %d to %d is %dkm\n", paths[i * 9 + j],
+               paths[i * 9 + j + 1],
+               get_distance(cities, cities_size, distances, paths[i * 9 + j],
+                            paths[i * 9 + j + 1]));
+      }
+    }
+  }
+
+  int global_min = 0;
+  // obtain min from all
+  MPI_Reduce(&lowest, &global_min, 1, MPI_INT, MPI_MIN, 0, MPI_COMM_WORLD);
+  // free used memory for paths
+  free(paths);
   if (rank == 0) {
-
-    // calculate how many memory is needed
-    int path_count = count_paths(cities, cities_size);
-    // allocate such memory
-    int *paths = malloc(sizeof(int) * path_count * (cities_size + 1));
-
-    // start with very high lowest route
-    int lowest = 100000000;
-    // set index to 0, which will be the first to override previous result
-    int lowest_idx = 0;
-
-    // obtain all possible routes
-    get_paths(cities, cities_size, paths);
-
-    // obtain distances for each route and determine shortest distance
-    for (int i = 0; i < path_count; i++) {
-      int path_distance = path_length(paths, cities, cities_size, distances, i);
-      if (path_distance < lowest) {
-        lowest = path_distance;
-        lowest_idx = i;
-      }
-    }
-
-    // obtain all distances which match shortest and print
-    for (int i = 0; i < path_count; i++) {
-      int path_distance = path_length(paths, cities, cities_size, distances, i);
-      if (path_distance == lowest) {
-        printf("\nShortest path found %d km at index %d\n", lowest, i);
-        printf("%d, %d, %d, %d, %d, %d, %d, %d, %d\n", paths[i * 9],
-               paths[i * 9 + 1], paths[i * 9 + 2], paths[i * 9 + 3],
-               paths[i * 9 + 4], paths[i * 9 + 5], paths[i * 9 + 6],
-               paths[i * 9 + 7], paths[i * 9 + 8]);
-        for (size_t j = 0; j < 8; j++) {
-          printf("Distance from %d to %d is %dkm\n", paths[i * 9 + j],
-                 paths[i * 9 + j + 1],
-                 get_distance(cities, cities_size, distances, paths[i * 9 + j],
-                              paths[i * 9 + j + 1]));
-        }
-      }
-    }
-
-    // free used memory for paths
-    free(paths);
+    // print collected min distance
+    printf("\nGlobal Min distance is %dkm\n", global_min);
   }
   ierr = MPI_Finalize();
   return 0;
