@@ -78,6 +78,18 @@ make
 make run
 ```
 
+## Ejercicio 2
+
+### Ruta más cercana secuencial
+
+Se obtiene la ruta circular más corta según los datos en el enunciado.
+
+```bash
+git checkout tags/ej2-secuencial
+make
+make run
+```
+
 ## Ejercicio 3
 
 ### 500000 primeros primos secuencial
